@@ -5,7 +5,7 @@ local runtime_context = terms.runtime_context
 local s = require "pretty-printer".s
 --local new_typechecking_context = terms.typechecking_context
 --local checkable_term = terms.checkable_term
---local inferrable_term = terms.inferrable_term
+local unanchored_inferrable_term = terms.inferrable_term
 local typed_term = terms.typed_term
 local free = terms.free
 local visibility = terms.visibility
@@ -2001,7 +2001,7 @@ function infer_impl(
 	typechecking_context -- todo
 )
 	-- -> type of term, usage counts, a typed term,
-	if terms.inferrable_term.value_check(inferrable_term) ~= true then
+	if unanchored_inferrable_term.value_check(inferrable_term) ~= true then
 		error("infer, inferrable_term: expected an inferrable term")
 	end
 	if terms.typechecking_context_type.value_check(typechecking_context) ~= true then
