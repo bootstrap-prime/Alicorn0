@@ -11,7 +11,8 @@ local U = require "alicorn-utils"
 local value = terms.value
 local typed = terms.typed_term
 
-local unanchored_inferrable_term = terms.inferrable_term
+local unanchored_inferrable_term = terms.unanchored_inferrable_term
+local anchored_inferrable_term = terms.anchored_inferrable_term
 
 local param_info_explicit = value.param_info(value.visibility(terms.visibility.explicit))
 local result_info_pure = value.result_info(terms.result_info(terms.purity.pure))
@@ -703,6 +704,7 @@ local ascribed_segment_tuple_desc = metalanguage.reducer(
 )
 
 local ascribed_segment_tuple = metalanguage.reducer(function(syntax, env)
+	-- todo: instead of returning string[] return SyntaxSymbols[] to better state where terms come from
 	local ok, thread = syntax:match({
 		ascribed_segment_tuple_desc(metalanguage.accept_handler, env),
 	}, metalanguage.failure_handler, nil)

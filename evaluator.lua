@@ -5,7 +5,8 @@ local runtime_context = terms.runtime_context
 local s = require "pretty-printer".s
 --local new_typechecking_context = terms.typechecking_context
 --local checkable_term = terms.checkable_term
-local unanchored_inferrable_term = terms.inferrable_term
+local unanchored_inferrable_term = terms.unanchored_inferrable_term
+local anchored_inferrable_term = terms.anchored_inferrable_term
 local typed_term = terms.typed_term
 local free = terms.free
 local visibility = terms.visibility
@@ -2738,10 +2739,12 @@ function infer_impl(
 	error("unreachable!?")
 end
 
----@param inferrable_term inferrable
+---@param anchored_inferrable_term anchored_inferrable
 ---@param typechecking_context TypecheckingContext
 ---@return value, ArrayValue, typed
-infer = function(inferrable_term, typechecking_context)
+infer = function(anchored_inferrable_term, typechecking_context)
+	local anchor, inferrable_term = anchored_inferrable_term:unwrap_anchored_inferrable()
+
 	local tracked = inferrable_term.track ~= nil
 	if tracked then
 		print(

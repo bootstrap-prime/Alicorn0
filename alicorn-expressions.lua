@@ -7,7 +7,8 @@ local expression_goal = terms.expression_goal
 local runtime_context = terms.runtime_context
 --local typechecking_context = terms.typechecking_context
 local checkable_term = terms.checkable_term
-local unanchored_inferrable_term = terms.inferrable_term
+local unanchored_inferrable_term = terms.unanchored_inferrable_term
+local anchored_inferrable_term = terms.anchored_inferrable_term
 local typed_term = terms.typed_term
 local visibility = terms.visibility
 local purity = terms.purity
@@ -20,7 +21,7 @@ local value = terms.value
 local gen = require "terms-generators"
 local array = gen.declare_array
 --local checkable_array = array(checkable_term)
-local inferrable_array = array(unanchored_inferrable_term)
+local anchored_inferrable_array = array(anchored_inferrable_term)
 local typed_array = array(typed_term)
 local value_array = array(value)
 local usage_array = array(gen.builtin_number)
@@ -551,7 +552,7 @@ end
 ---@param goal expression_goal
 ---@param env Environment
 ---@return boolean
----@return string|checkable|inferrable
+---@return string|checkable|anchored_inferrable
 ---@return Environment
 local function call_operative(type_of_term, usage_count, term, sargs, goal, env)
 	-- TODO: speculate operative type
@@ -960,10 +961,16 @@ local function expression_symbolhandler(args, name)
 				namearray = name.str
 			end
 
-			part = unanchored_inferrable_term.record_elim(
-				part,
-				name_array(namearray),
-				unanchored_inferrable_term.bound_variable(env.typechecking_context:len() + 1, U.bound_here())
+			part = anchored_inferrable_term(
+				name.start_anchor,
+				unanchored_inferrable_term.record_elim(
+					part,
+					name_array(namearray),
+					anchored_inferrable_term(
+						name.start_anchor,
+						unanchored_inferrable_term.bound_variable(env.typechecking_context:len() + 1, U.bound_here())
+					)
+				)
 			)
 		end
 		if goal:is_check() then
@@ -998,19 +1005,25 @@ local function expression_valuehandler(args, val)
 	if val.type == "f64" then
 		--p(val)
 		return true,
-			unanchored_inferrable_term.typed(
-				value.host_number_type,
-				usage_array(),
-				typed_term.literal(value.host_value(val.val))
+			anchored_inferrable_term(
+				val.start_anchor,
+				unanchored_inferrable_term.typed(
+					value.host_number_type,
+					usage_array(),
+					typed_term.literal(value.host_value(val.val))
+				)
 			),
 			env
 	end
 	if val.type == "string" then
 		return true,
-			unanchored_inferrable_term.typed(
-				value.host_string_type,
-				usage_array(),
-				typed_term.literal(value.host_value(val.val))
+			anchored_inferrable_term(
+				val.start_anchor,
+				unanchored_inferrable_term.typed(
+					value.host_string_type,
+					usage_array(),
+					typed_term.literal(value.host_value(val.val))
+				)
 			),
 			env
 	end
@@ -1216,7 +1229,7 @@ collect_tuple = metalanguage.reducer(
 			collected_terms = array(checkable_term)()
 			goal_type = goal:unwrap_check()
 		else
-			collected_terms = inferrable_array()
+			collected_terms = anchored_inferrable_array()
 		end
 
 		local ok, continue, next_term = true, true, nil
@@ -1313,7 +1326,7 @@ collect_host_tuple = metalanguage.reducer(
 			collected_terms = array(checkable_term)()
 			goal_type = goal:unwrap_check()
 		else
-			collected_terms = inferrable_array()
+			collected_terms = anchored_inferrable_array()
 		end
 
 		local ok, continue, next_term = true, true, nil
@@ -1415,7 +1428,7 @@ local block = metalanguage.reducer(
 		if not goal:is_infer() then
 			error("NYI non-infer cases for block")
 		end
-		local lastval = unanchored_inferrable_term.tuple_cons(inferrable_array())
+		local lastval = unanchored_inferrable_term.tuple_cons(anchored_inferrable_array())
 		local newval
 		local ok, continue = true, true
 		while ok and continue do
@@ -1481,7 +1494,7 @@ local top_level_block = metalanguage.reducer(
 		if not goal:is_infer() then
 			error("NYI non-infer cases for block")
 		end
-		local lastval = unanchored_inferrable_term.tuple_cons(inferrable_array())
+		local lastval = unanchored_inferrable_term.tuple_cons(anchored_inferrable_array())
 		local newval
 		local ok, continue = true, true
 
